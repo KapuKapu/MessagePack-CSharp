@@ -17,6 +17,9 @@ namespace MessagePack.Resolvers
     /// </summary>
     public sealed class DynamicUnionResolver : IFormatterResolver
     {
+        // Added
+        public static readonly Dictionary<Type, UnionAttribute[]> typeModelCache = new Dictionary<Type, UnionAttribute[]>();
+
         public static readonly DynamicUnionResolver Instance = new DynamicUnionResolver();
 
         const string ModuleName = "MessagePack.Resolvers.DynamicUnionResolver";
@@ -82,8 +85,15 @@ namespace MessagePack.Resolvers
         static TypeInfo BuildType(Type type)
         {
             var ti = type.GetTypeInfo();
-            // order by key(important for use jump-table of switch)
-            var unionAttrs = ti.GetCustomAttributes<UnionAttribute>().OrderBy(x => x.Key).ToArray();
+
+            UnionAttribute[] unionAttrs;
+            var typeIsNotCached = !DynamicUnionResolver.typeModelCache.TryGetValue(type, out unionAttrs);
+            if (typeIsNotCached)
+            {
+                // order by key(important for use jump-table of switch)
+                unionAttrs = ti.GetCustomAttributes<UnionAttribute>().OrderBy(x => x.Key).ToArray();
+                DynamicUnionResolver.typeModelCache[type] = unionAttrs;
+            }
 
             if (unionAttrs.Length == 0) return null;
             if (!ti.IsInterface && !ti.IsAbstract)
