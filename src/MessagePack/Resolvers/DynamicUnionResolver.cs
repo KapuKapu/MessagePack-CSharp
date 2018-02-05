@@ -92,7 +92,11 @@ namespace MessagePack.Resolvers
             {
                 // order by key(important for use jump-table of switch)
                 unionAttrs = ti.GetCustomAttributes<UnionAttribute>().OrderBy(x => x.Key).ToArray();
-                DynamicUnionResolver.typeModelCache[type] = unionAttrs;
+                var unionAttributesFound = unionAttrs.Any();
+                if (unionAttributesFound)
+                {
+                    DynamicUnionResolver.typeModelCache[type] = unionAttrs;
+                }
             }
 
             if (unionAttrs.Length == 0) return null;
